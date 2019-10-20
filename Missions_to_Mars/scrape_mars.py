@@ -5,12 +5,11 @@ from pprint import pprint
 from time import sleep
 
 def scrape():
-
     executable_path = {'executable_path': 'chromedriver.exe'}
     browser = Browser('chrome', **executable_path, headless=True)
 
     first_title, first_paragraph = mars_news(browser)
-    
+
     results = {
         "title": first_title,
         "paragraph": first_paragraph,
@@ -29,7 +28,6 @@ def mars_news(browser):
     html = browser.html
     mars_news_soup = BeautifulSoup(html, 'html.parser')
 
-    # Scrape the first article title and teaser paragraph text; return them
     first_title = mars_news_soup.find('div', class_='content_title').text
     first_paragraph = mars_news_soup.find('div', class_='article_teaser_body').text
     return first_title, first_paragraph
@@ -38,7 +36,6 @@ def jpl_image(browser):
     url = 'https://www.jpl.nasa.gov/spaceimages/?search=&category=Mars'
     browser.visit(url)
 
-    # Go to 'FULL IMAGE', then to 'more info'
     browser.click_link_by_partial_text('FULL IMAGE')
     sleep(1)
     browser.click_link_by_partial_text('more info')
@@ -46,7 +43,6 @@ def jpl_image(browser):
     html = browser.html
     image_soup = BeautifulSoup(html, 'html.parser')
 
-    # Scrape the URL and return
     feat_img_url = image_soup.find('figure', class_='lede').a['href']
     feat_img_full_url = f'https://www.jpl.nasa.gov{feat_img_url}'
     return feat_img_full_url
@@ -66,10 +62,8 @@ def mars_facts():
     tables = pd.read_html(url)
     df = tables[0]
     df.columns = ['Property', 'Value']
-    # Set index to property in preparation for import into MongoDB
     df.set_index('Property', inplace=True)
-    
-    # Convert to HTML table string and return
+
     return df.to_html()
     
 def mars_hemis(browser):
@@ -85,30 +79,22 @@ def mars_hemis(browser):
     for hemi in links:
         hemi_strings.append(hemi.text)
 
-    # Initialize hemisphere_image_urls list
     hemisphere_image_urls = []
 
-    # Loop through the hemisphere links to obtain the images
     for hemi in hemi_strings:
-        # Initialize a dictionary for the hemisphere
+
         hemi_dict = {}
-        
-        # Click on the link with the corresponding text
+
         browser.click_link_by_partial_text(hemi)
-        
-        # Scrape the image url string and store into the dictionary
+
         hemi_dict["img_url"] = browser.find_by_text('Sample')['href']
-        
-        # The hemisphere title is already in hemi_strings, so store it into the dictionary
+
         hemi_dict["title"] = hemi
-        
-        # Add the dictionary to hemisphere_image_urls
+
         hemisphere_image_urls.append(hemi_dict)
-    
-        # Check for output
+
         pprint(hemisphere_image_urls)
-    
-        # Click the 'Back' button
+
         browser.click_link_by_partial_text('Back')
     
     return hemisphere_image_urls
